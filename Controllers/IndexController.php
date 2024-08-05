@@ -43,11 +43,11 @@ class IndexController
      */
     public function actionUpdate($data): void
     {
-        if(empty($data) || empty($data['last_stamp'])) {
+        if(!isset($data['last_stamp'])) {
             header('HTTP/1.1 400 Bad Request');
             die;
         }
-
+        
         $ips = json_decode(file_get_contents($this->clientIPs), true);
         $messages = json_decode(file_get_contents($this->messagesPath), true);
 
