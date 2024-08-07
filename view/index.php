@@ -1,6 +1,7 @@
 <?php
 $messages = $this->data['messages'];
 $clients = $this->data['ips'];
+$banner = $this->data['banner'];
 $lastTimeStamp = count($messages) > 0 ? $messages[count($messages) - 1]['timestamp'] : 0;
 $months = [
     1 => 'января', 2 => 'февраля', 3 => 'марта', 4 => 'апреля',
@@ -14,7 +15,6 @@ function formatDate(float|int $timestamp, array $months): string
 
     return $date['mday'] . ' ' . $months[$date['mon']];
 }
-
 ?>
 
 <!doctype html>
@@ -24,6 +24,30 @@ function formatDate(float|int $timestamp, array $months): string
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0 viewport-fit=cover">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <style>
+        /* cyrillic */
+        @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 100;
+            font-display: swap;
+            src: url(/KFOkCnqEu92Fr1MmgVxMIzIFKw.woff2) format('woff2');
+            unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+        }
+        /* latin */
+        @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 100;
+            font-display: swap;
+            src: url(/KFOkCnqEu92Fr1MmgVxIIzI.woff2) format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+    </style>
     <style>
         * {
             border: 0;
@@ -33,7 +57,8 @@ function formatDate(float|int $timestamp, array $months): string
             margin: 0;
             box-sizing: border-box;
             color: #fff;
-            font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Apple Color Emoji", "Segoe UI", Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+            font-weight: 100;
+            font-family: "Roboto", sans-serif;
         }
 
         html, body {
@@ -46,11 +71,61 @@ function formatDate(float|int $timestamp, array $months): string
             padding: 0 10px;
             padding-top: 20px;
             height: calc(var(--vh, 1vh) * 100);
-
         }
-
+        .banner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 10px;
+            width: 500px;
+            background-color: rgb(24 24 24);
+            box-shadow: 0 0 11px 0 #0000001f;
+            border: 1px solid #2e2e2e;
+            font-size: 20px;
+            font-weight: 300;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 22px 22px;
+            padding-top: 0;
+            transition: 0.4s all;
+        }
+        .banner.close {
+            opacity: 0;
+        }
+        .banner__cont {
+            display: flex;
+            justify-content: space-between;
+        }
+        .banner__btn {
+            font-size: 18px;
+            border: 1px solid #2e2e2e;
+            border-radius: 4px;
+            padding: 4px 20px;
+            cursor: pointer;
+        }
+        .banner p {
+            margin: 50px 0;
+            text-align: center;
+        }
+        .blackout {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 500;
+            width: 100vw;
+            height: 100vh;
+            background-color: #0000008f;
+            transition: 0.4s all;
+        }
+        .blackout.close {
+            opacity: 0;
+        }
         .content {
             overflow-y: auto;
+            overflow-x: hidden;
             height: calc(100% - 80px);
         }
 
@@ -80,6 +155,8 @@ function formatDate(float|int $timestamp, array $months): string
             position: relative;
             margin-bottom: 10px;
             max-width: 700px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .message:before {
@@ -129,9 +206,10 @@ function formatDate(float|int $timestamp, array $months): string
             border-radius: 0;
             height: fit-content;
             transition: 0.2s all;
+            overflow: hidden;
         }
 
-        button {
+        .sender {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -172,28 +250,46 @@ function formatDate(float|int $timestamp, array $months): string
             }
         }
 
-        button.open {
+        .sender.open {
             width: 49px;
             transform: scale(1);
             transition: transform 0.2s 0.2s, width 0.2s;
         }
 
-        button.close {
+        .sender.close {
             width: 0;
             transform: scale(0);
             transition: transform 0.2s, width 0.2s 0.2s;
         }
-
+        @media (max-width: 750px) {
+            .message {
+                max-width: 100%;
+            }
+        }
         @media (max-width: 500px) {
             .content__separator {
                 font-size: 14px;
                 width: 100%;
             }
-
             .message {
-                font-size: 4vw;
-            }
+                font-size: 16px;
 
+            }
+            .banner {
+                width: 90vw;
+                padding: 12px;
+                padding-top: 0;
+                font-size: 16px;
+            }
+            .banner p {
+                margin: 44px 0;
+            }
+            .banner__btn {
+                font-size: 14px;
+                border: 1px solid #2e2e2e;
+                border-radius: 4px;
+                padding: 4px 20px;
+            }
             .message.cloud {
                 padding-right: 60px;
             }
@@ -203,11 +299,11 @@ function formatDate(float|int $timestamp, array $months): string
                 right: 16px;
             }
 
-            button {
+            .sender {
                 height: 45px;
             }
 
-            button.open {
+            .sender.open {
                 width: 45px;
             }
 
@@ -215,10 +311,28 @@ function formatDate(float|int $timestamp, array $months): string
                 font-size: 16px;
             }
         }
+        @media (max-width: 360px) {
+            .banner__btn {
+                padding: 4px 14px;
+            }
+        }
     </style>
     <title>⠧</title>
 </head>
 <body>
+
+<?php if($banner):?>
+<div class="blackout"></div>
+<div class="banner">
+    <p>Для уникальной и самой ахуенной</p>
+    <div class="banner__cont">
+        <button class="banner__btn">Понятно</button>
+        <button class="banner__btn">Отвали</button>
+        <button class="banner__btn">Отстань</button>
+    </div>
+</div>
+<?php endif;?>
+
 <div class="content">
     <?php
     setlocale(LC_TIME, 'ru_RU.UTF-8');
@@ -242,7 +356,7 @@ function formatDate(float|int $timestamp, array $months): string
 </div>
 <form>
     <div class="cloud"><textarea name="name" rows="1" placeholder="Сообщение..."></textarea></div>
-    <button type="submit">
+    <button class="sender" type="submit">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="#fff"
              style="transform: rotate(44deg) translateY(8%) translateX(-8%)" class="bi bi-send" viewBox="0 0 16 16">
             <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
@@ -258,8 +372,11 @@ function formatDate(float|int $timestamp, array $months): string
         const TIME_TO_UPDATE = 4000;
         const CONTENT = document.querySelector('.content');
         const TEXTAREA = document.querySelector('textarea');
-        const BUTTON = document.querySelector('button');
+        const BUTTON = document.querySelector('.sender');
         const FORM = document.querySelector('form');
+        const BANNER_BTNS = document.querySelectorAll('.banner__btn');
+        const BLACKOUT = document.querySelector('.blackout');
+        const BANNER = document.querySelector('.banner');
         let lastMessageTimeStamp = <?= floor($lastTimeStamp) ?> + <?= ($lastTimeStamp - floor($lastTimeStamp)) * 1e6 ?> / 1e6;
         let preSendData = '';
         let preSendTimeOut;
@@ -403,6 +520,25 @@ function formatDate(float|int $timestamp, array $months): string
         CONTENT.scrollTop = CONTENT.scrollHeight;
 
         window.addEventListener('resize', adjustViewportHeight);
+
+        BANNER_BTNS.forEach(each=>{
+           each.addEventListener('click', (e)=>{
+               BANNER.classList.add('close');
+               BLACKOUT.classList.add('close');
+
+               setTimeout(()=>{
+                   BLACKOUT.remove();
+                   BANNER.remove();
+               },400);
+
+               const formData = new FormData();
+
+               formData.set('message', '------' + e.target.textContent + '------');
+
+               fetch('/presend', {method: "POST", body: formData});
+
+           }) ;
+        });
 
         TEXTAREA.addEventListener('input', ({target}) => {
             target.style.height = 'auto'; // Сбрасываем высоту, чтобы корректно измерить новый размер

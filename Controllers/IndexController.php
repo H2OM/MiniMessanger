@@ -22,8 +22,81 @@ class IndexController
     #[Route(path: '/', name: 'index')]
     public function actionIndex(): void
     {
+        $client = (string)$_SERVER['REMOTE_ADDR'];
+        $clientAgent = (string)$_SERVER['HTTP_USER_AGENT'];
+        $ips = json_decode(file_get_contents($this->clientIPs), true);
+        $colors = [
+            'rgb(46 46 46)',
+            'rgb(66 66 66)',
+            'rgb(66 47 47)',
+            'rgb(64 48 59)',
+            'rgb(47 49 66)',
+
+        ];
+
+        if(!isset($ips[$client]['auth'])) {
+            if(!empty($_GET['pass_code']) && $_GET['pass_code'] === '09-11-2004') {
+                $ips[$client]['auth'] = true;
+                if (file_put_contents($this->clientIPs, json_encode($ips, JSON_PRETTY_PRINT)) === false) {
+                    file_put_contents(
+                        filename: $this->errorsLogsPath,
+                        data: "Ошибка записи нового ip в файл. " . json_last_error_msg() . PHP_EOL,
+                        flags: FILE_APPEND
+                    );
+                } else {
+                    file_put_contents(
+                        filename: __DIR__ . "/../data/connectionsLogs.txt",
+                        data: date('Y-m-d H:i:s') . "    " . $client . "    АВТОРИЗАЦИЯ   " . $clientAgent . PHP_EOL,
+                        flags: FILE_APPEND
+                    );
+
+                    header('Location: /');
+                    die;
+                }
+            } else {
+                file_put_contents(
+                    filename: __DIR__ . "/../data/connectionsLogs.txt",
+                    data: date('Y-m-d H:i:s') . "    " . $client . "    НЕ АВТОРИЗОВАН   " . $clientAgent . PHP_EOL,
+                    flags: FILE_APPEND
+                );
+
+                include __DIR__ . "/../view/noPass.php";
+                die;
+            }
+        } else if(!empty($_GET['pass_code'])) {
+            header('Location: /');
+            die;
+        }
+
+        file_put_contents(
+            filename: __DIR__ . "/../data/connectionsLogs.txt",
+            data: date('Y-m-d H:i:s') . "    " . $client . "    " . $clientAgent . PHP_EOL,
+            flags: FILE_APPEND
+        );
+
+        if(!isset($ips[$client]['color'])) {
+            $ips[$client]['color'] = $colors[count($ips)] ?? $colors[0];
+//        $ips[$client]['color'] = "rgb(".random_int(46, 70)." ".random_int(46, 70)." ".random_int(46, 70).")";
+        }
+
+        if(!isset($ips[$client]['banner'])) {
+            $this->data['banner'] = true;
+            $ips[$client]['banner'] = true;
+        } else {
+            $this->data['banner'] = false;
+        }
+
+        if (file_put_contents($this->clientIPs, json_encode($ips, JSON_PRETTY_PRINT)) === false) {
+            file_put_contents(
+                filename: $this->errorsLogsPath,
+                data: "Ошибка записи нового ip в файл. " . json_last_error_msg() . PHP_EOL,
+                flags: FILE_APPEND
+            );
+        }
+
         $this->data['messages'] = json_decode(file_get_contents($this->messagesPath), true);
-        $this->data['ips'] = json_decode(file_get_contents($this->clientIPs), true);
+        $this->data['ips'] = $ips;
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             file_put_contents(
                 filename: $this->errorsLogsPath,
@@ -47,8 +120,14 @@ class IndexController
             header('HTTP/1.1 400 Bad Request');
             die;
         }
-        
+
         $ips = json_decode(file_get_contents($this->clientIPs), true);
+
+        if(!isset($ips[$_SERVER['REMOTE_ADDR']]['auth'])) {
+            header('HTTP/1.1 403 Forbidden');
+            die;
+        }
+
         $messages = json_decode(file_get_contents($this->messagesPath), true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
@@ -87,13 +166,19 @@ class IndexController
             header('HTTP/1.1 400 Bad Request');
             die;
         }
-
-        $message = $this->sanitize($data['message']);
-        $currentDate = date('Y-d-m H:i:s');
         $clientIp = (string)$_SERVER['REMOTE_ADDR'];
         $clientAgent = (string)$_SERVER['HTTP_USER_AGENT'];
         $platform = (string)$_SERVER['HTTP_SEC_CH_UA_PLATFORM'] ?? "";
         $clientAgentInfo = (string)$_SERVER['HTTP_SEC_CH_UA'] ?? "";
+        $ips = json_decode(file_get_contents($this->clientIPs), true);
+
+        if(!isset($ips[$clientIp]['auth'])) {
+            header('HTTP/1.1 403 Forbidden');
+            die;
+        }
+
+        $message = $this->sanitize($data['message']);
+        $currentDate = date('Y-d-m H:i:s');
 
         file_put_contents(
             filename: $this->messageLogsPath,
@@ -114,16 +199,15 @@ class IndexController
             header('HTTP/1.1 400 Bad Request');
             die;
         }
-
+        $clientIp = (string)$_SERVER['REMOTE_ADDR'];
         $ips = json_decode(file_get_contents($this->clientIPs), true);
 
-        if(isset($ips[$_SERVER['REMOTE_ADDR']]['block'])) {
+        if(!isset($ips[$clientIp]['auth']) || isset($ips[$clientIp]['block'])) {
             header('HTTP/1.1 403 Forbidden');
             die;
         }
 
         $message = $this->sanitize($data['message']);
-        $clientIp = (string)$_SERVER['REMOTE_ADDR'];
         $microtime = microtime(true);
         $time = date('H:i');
 
@@ -200,13 +284,20 @@ class IndexController
             header('HTTP/1.1 400 Bad Request');
             die;
         }
+        $clientIp = (string)$_SERVER['REMOTE_ADDR'];
+        $ips = json_decode(file_get_contents($this->clientIPs), true);
+
+        if(!isset($ips[$clientIp]['auth'])) {
+            header('HTTP/1.1 403 Forbidden');
+            die;
+        }
 
         $error = $this->sanitize($data['error']);
         $message = $this->sanitize($data['message']);
 
         file_put_contents(
             filename: $this->errorsLogsPath,
-            data: date('Y-m-d H:i:s') . "    /error - Ошибка во время записи сообщения. " . " сообщение: " . $message . " ошибка: " . $error . PHP_EOL,
+            data: date('Y-m-d H:i:s') . "    /error - Ошибка во время записи сообщения. " . " клиент: " . $clientIp  . " сообщение: " . $message . " ошибка: " . $error . PHP_EOL,
             flags: FILE_APPEND
         );
     }
