@@ -75,7 +75,7 @@ class IndexController
         );
 
         if(!isset($ips[$client]['color'])) {
-            $ips[$client]['color'] = $colors[count($ips)] ?? $colors[0];
+            $ips[$client]['color'] = $colors[count($ips) - 1] ?? $colors[0];
 //        $ips[$client]['color'] = "rgb(".random_int(46, 70)." ".random_int(46, 70)." ".random_int(46, 70).")";
         }
 
