@@ -324,11 +324,10 @@ function formatDate(float|int $timestamp, array $months): string
 <?php if($banner):?>
 <div class="blackout"></div>
 <div class="banner">
-    <p>Для самой уникальной и самой ахуенной</p>
+    <p>Это мини мессенджер</p>
     <div class="banner__cont">
+        <button class="banner__btn">Круто</button>
         <button class="banner__btn">Понятно</button>
-        <button class="banner__btn">Отвали</button>
-        <button class="banner__btn">Отстань</button>
     </div>
 </div>
 <?php endif;?>
