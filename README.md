@@ -15,7 +15,7 @@
 > ### /data/messageLogs.txt
 > ### /data/messages.json (content: {})
   
-## Технологии проекта:
+## Стек проекта:
   > ### PHP.
   > ### Чистый JS.
   > ### All in one file.  
