@@ -1,5 +1,7 @@
 <?php
     include_once __DIR__ . '/Controllers/IndexController.php';
+    include_once __DIR__ . '/config/config.php';
+
     spl_autoload('Controller/IndexController');
     use Controllers\IndexController;
 

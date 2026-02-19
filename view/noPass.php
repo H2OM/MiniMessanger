@@ -5,9 +5,9 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0 viewport-fit=cover">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
     <style>
         /* cyrillic */
@@ -16,7 +16,7 @@
             font-style: normal;
             font-weight: 100;
             font-display: swap;
-            src: url(/KFOkCnqEu92Fr1MmgVxMIzIFKw.woff2) format('woff2');
+            src: url(/assets/KFOkCnqEu92Fr1MmgVxMIzIFKw.woff2) format('woff2');
             unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
         }
         /* latin */
@@ -25,7 +25,7 @@
             font-style: normal;
             font-weight: 100;
             font-display: swap;
-            src: url(/KFOkCnqEu92Fr1MmgVxIIzI.woff2) format('woff2');
+            src: url(/assets/KFOkCnqEu92Fr1MmgVxIIzI.woff2) format('woff2');
             unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
         }
     </style>
@@ -103,7 +103,7 @@
             }
         }
     </style>
-    <title>⠧</title>
+    <title>?</title>
 </head>
 <body>
     <div class="blackout"></div>

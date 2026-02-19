@@ -1,5 +1,5 @@
 <?php
-$messages = $this->data['messages'];
+$messages = $this->data['messages'] ?? [];
 $clients = $this->data['ips'];
 $banner = $this->data['banner'];
 $lastTimeStamp = count($messages) > 0 ? $messages[count($messages) - 1]['timestamp'] : 0;
@@ -24,9 +24,9 @@ function formatDate(float|int $timestamp, array $months): string
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0 viewport-fit=cover">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
     <style>
         /* cyrillic */
@@ -35,7 +35,7 @@ function formatDate(float|int $timestamp, array $months): string
             font-style: normal;
             font-weight: 100;
             font-display: swap;
-            src: url(/KFOkCnqEu92Fr1MmgVxMIzIFKw.woff2) format('woff2');
+            src: url(/assets/KFOkCnqEu92Fr1MmgVxMIzIFKw.woff2) format('woff2');
             unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
         }
         /* latin */
@@ -44,7 +44,7 @@ function formatDate(float|int $timestamp, array $months): string
             font-style: normal;
             font-weight: 100;
             font-display: swap;
-            src: url(/KFOkCnqEu92Fr1MmgVxIIzI.woff2) format('woff2');
+            src: url(/assets/KFOkCnqEu92Fr1MmgVxIIzI.woff2) format('woff2');
             unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
         }
     </style>
@@ -71,6 +71,12 @@ function formatDate(float|int $timestamp, array $months): string
             padding: 0 10px;
             padding-top: 20px;
             height: calc(var(--vh, 1vh) * 100);
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            position: relative;
+            height: 100%;
         }
         .banner {
             position: absolute;
@@ -133,7 +139,7 @@ function formatDate(float|int $timestamp, array $months): string
             font-size: 20px;
             margin-bottom: 10px;
             text-align: center;
-            width: 500px;
+            width: 100%;
         }
 
         .content::-webkit-scrollbar-button {
@@ -170,12 +176,12 @@ function formatDate(float|int $timestamp, array $months): string
 
         form {
             position: absolute;
-            left: 10px;
+            left: 0;
             bottom: 20px;
             display: flex;
             z-index: 50;
             gap: 10px;
-            max-width: 500px;
+            max-width: 100%;
             justify-content: space-between;
             align-items: flex-end;
             width: calc(100vw - 20px);
@@ -267,9 +273,11 @@ function formatDate(float|int $timestamp, array $months): string
             }
         }
         @media (max-width: 500px) {
+            form {
+                max-width: 500px;
+            }
             .content__separator {
                 font-size: 14px;
-                width: 100%;
             }
             .message {
                 font-size: 16px;
@@ -317,21 +325,20 @@ function formatDate(float|int $timestamp, array $months): string
             }
         }
     </style>
-    <title>⠧</title>
+    <title>Мини-мессенджер</title>
 </head>
 <body>
-
 <?php if($banner):?>
-<div class="blackout"></div>
-<div class="banner">
-    <p>Это мини мессенджер</p>
-    <div class="banner__cont">
-        <button class="banner__btn">Круто</button>
-        <button class="banner__btn">Понятно</button>
+    <div class="blackout"></div>
+    <div class="banner">
+        <p>Это мини мессенджер</p>
+        <div class="banner__cont">
+            <button class="banner__btn">Круто</button>
+            <button class="banner__btn">Не круто</button>
+        </div>
     </div>
-</div>
 <?php endif;?>
-
+<div class="container">
 <div class="content">
     <?php
     setlocale(LC_TIME, 'ru_RU.UTF-8');
@@ -364,11 +371,11 @@ function formatDate(float|int $timestamp, array $months): string
 </form>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        const SOCKET = new WebSocket("ws://<?=WS_SERVER_IP?>");
         const MONTHS = [
             'Января', 'Февраля', 'Марта', 'Апреля', 'Мая', 'Июня',
             'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря'
         ];
-        const TIME_TO_UPDATE = 4000;
         const CONTENT = document.querySelector('.content');
         const TEXTAREA = document.querySelector('textarea');
         const BUTTON = document.querySelector('.sender');
@@ -379,7 +386,6 @@ function formatDate(float|int $timestamp, array $months): string
         let lastMessageTimeStamp = <?= floor($lastTimeStamp) ?> + <?= ($lastTimeStamp - floor($lastTimeStamp)) * 1e6 ?> / 1e6;
         let preSendData = '';
         let preSendTimeOut;
-        let updateInterval;
         let isSending = false;
         CONTENT.style.height = `calc(100% - ${TEXTAREA.scrollHeight}px - 60px)`;
 
@@ -410,46 +416,22 @@ function formatDate(float|int $timestamp, array $months): string
             CONTENT.scrollTo({top: CONTENT.scrollHeight, left: 0, behavior: 'smooth'});
         };
 
-        const messagesUpdater = () => {
+        const sendError = (text, data) => {
+            const elem = document.createElement('div');
+            elem.classList.add('error');
+            elem.innerHTML = text;
+            document.body.append(elem);
+
+            setTimeout(() => {
+                elem.style.transform = 'scale(0)';
+                setTimeout(() => elem.remove(), 200);
+            }, 4000);
             const formData = new FormData();
 
-            formData.set('last_stamp', lastMessageTimeStamp);
+            formData.set('error', '1');
+            formData.set('message', data);
 
-            fetch('/update', {method: "POST", body: formData})
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error();
-                    }
-
-                    return response.json();
-                }).then(data => {
-
-                if (data.length === 0) return;
-
-                data.forEach(each => {
-                    if (Number(each.timestamp) > lastMessageTimeStamp) {
-                        appendMessage({message: each.message, date: each.date, timestamp: each.timestamp, client: each.client});
-                    }
-                });
-
-                lastMessageTimeStamp = Number(data[data.length - 1].timestamp);
-            }).catch((e) => {
-                isSending = false;
-                const elem = document.createElement('div');
-                elem.classList.add('error');
-                elem.innerHTML = 'Ошибка загрузки новых сообщений';
-                document.body.append(elem);
-
-                setTimeout(() => {
-                    elem.style.transform = 'scale(0)';
-                    setTimeout(() => elem.remove(), 200);
-                }, 4000);
-                const formData = new FormData();
-                formData.set('error', e);
-                formData.set('message', "Ошибка загрузки новых сообщений");
-
-                fetch('/error', {method: "POST", body: formData});
-            });
+            fetch('/error', {method: "POST", body: formData});
         }
 
         const preSend = (message) => {
@@ -459,68 +441,13 @@ function formatDate(float|int $timestamp, array $months): string
             fetch('/presend', {method: "POST", body: formData});
         };
 
-        const send = (e) => {
-            e.preventDefault();
-
-            if (isSending || TEXTAREA.value.length < 1) return;
-
-            const formData = new FormData();
-            const message = TEXTAREA.value;
-
-            formData.set('message', message);
-
-            isSending = true;
-
-            fetch('/send', {method: "POST", body: formData})
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error();
-                    }
-
-                    return response.json();
-                }).then(data => {
-                isSending = false;
-
-                FORM.reset();
-                BUTTON.classList.add('close');
-                BUTTON.classList.remove('open');
-
-                clearInterval(updateInterval);
-                updateInterval = setInterval(() => messagesUpdater(), TIME_TO_UPDATE);
-
-                data.forEach(each => {
-                    if (Number(each.timestamp) > lastMessageTimeStamp) {
-                        appendMessage({message: each.message, date: each.date, timestamp: each.timestamp, client: each.client});
-                    }
-                });
-
-                lastMessageTimeStamp = Number(data[data.length - 1].timestamp);
-            }).catch((e) => {
-                isSending = false;
-                const elem = document.createElement('div');
-                elem.classList.add('error');
-                elem.innerHTML = 'Что то не так';
-                document.body.append(elem);
-
-                setTimeout(() => {
-                    elem.style.transform = 'scale(0)';
-                    setTimeout(() => elem.remove(), 200);
-                }, 4000);
-                const formData = new FormData();
-                formData.set('error', e);
-                formData.set('message', message);
-
-                fetch('/error', {method: "POST", body: formData});
-            });
-        }
-
         adjustViewportHeight();
 
         CONTENT.scrollTop = CONTENT.scrollHeight;
 
         window.addEventListener('resize', adjustViewportHeight);
 
-        BANNER_BTNS.forEach(each=>{
+        BANNER_BTNS.forEach(each => {
            each.addEventListener('click', (e)=>{
                BANNER.classList.add('close');
                BLACKOUT.classList.add('close');
@@ -575,10 +502,53 @@ function formatDate(float|int $timestamp, array $months): string
             }
         });
 
-        FORM.addEventListener('submit', send);
+        FORM.addEventListener('submit', (e) => {
+            e.preventDefault();
 
-        updateInterval = setInterval(() => messagesUpdater(), TIME_TO_UPDATE);
+            if (isSending || TEXTAREA.value.length < 1) return;
+
+            const formData = new FormData();
+            const message = TEXTAREA.value;
+
+            formData.set('message', message);
+
+            isSending = true;
+
+            SOCKET.send(JSON.stringify({
+                message,
+                last_stamp: lastMessageTimeStamp
+            }));
+        });
+
+        SOCKET.onopen = ()=> {
+            console.log('WebSocket подключен');
+        }
+
+        SOCKET.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            isSending = false;
+
+            if(!data || !data.from || data.type === 'error') {
+                return sendError(data?.payload?.message ?? 'Что то не так', JSON.stringify(event));
+            }
+
+            if(data.from === "self") {
+                FORM.reset();
+                BUTTON.classList.add('close');
+                BUTTON.classList.remove('open');
+            }
+
+            data.payload.message.forEach(each => {
+                if (Number(each.timestamp) > lastMessageTimeStamp) {
+                    appendMessage({message: each.message, date: each.date, timestamp: each.timestamp, client: each.client});
+                }
+            });
+
+            lastMessageTimeStamp = Number(data.payload.message[data.payload.message.length - 1].timestamp);
+        }
     });
 </script>
+</div>
 </body>
 </html>
